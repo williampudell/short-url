@@ -18,6 +18,19 @@
 			$this->dbConnect();					// Initiate Database connection
 		}
 
+        /*
+         * Public method for access api.
+         * This method dynmically call the method based on the query string
+         *
+         */
+        public function processApi(){
+            $func = strtolower(trim(str_replace("/","",$_REQUEST['method'])));
+            if((int)method_exists($this,$func) > 0)
+                $this->$func();
+            else
+                $this->response('',404);				// If the method not exist with in this class, response would be "Page not found".
+        }
+
 	}
 
 	$api = new API;
