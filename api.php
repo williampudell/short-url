@@ -54,6 +54,8 @@
 
 			if($request_method == "GET"){
 
+				$this->_content_type = "text/html charset=utf-8";
+
 				// Tratamento dos dados passados pela url
 				$param = explode("/",$this->_request['method']);
 				$qtd = count($param);
@@ -67,7 +69,7 @@
 				if(mysql_num_rows($sql)>0){
 					$result = mysql_fetch_array($sql, MYSQL_ASSOC);
 					mysql_query("UPDATE tb_urls u SET u.hits = (u.hits+1) WHERE u.id = {$param[1]}");
-					$this->response($this->json($result),301);
+					$this->response("Location: {$result['url']}",301);
 				} else {
 					$this->response('',404);
 				}
