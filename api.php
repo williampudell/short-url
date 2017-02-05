@@ -33,35 +33,37 @@
          */
         public function processApi(){
 			if(array_key_exists("method",$_REQUEST)){
-				// removo os espaços, transformo em minusculo e explodo a chamada para execução da API
-	            $func = explode("/",strtolower(trim($_REQUEST['method'])));
-				// Conto quantos parametros existem na chamada
-				$param = count($func);
+				// removo os espaços, transformo em minusculo
+	            $func = explode("/",strtolower(trim($_REQUEST['method'])))[0];
 				// Verifico se existe a função desejada
-	            if((int)method_exists($this,$func[0]) > 0){
-					// Se houver mais de um parametro na chamada eu passo para a função
-					if($param > 1){
-						$this->$func[0]($func[1]);
-					} else { // Se não houver, apenas chamo a função
-						$this->$func[0]();
-					}
+	            if((int)method_exists($this,$func) > 0){
+					$this->$func();
 	            } else { // Se a função não existe ele retorna o erro 404
 					$this->response('',404);
 				}
-			} else {
-				// Se não for passado nenhum parametro retorna o erro 404
-				$this->response('',404);
 			}
         }
 
 		/*
 		 *	Função que retorna a URL completa baseando-se no ID passado
-		 *	@param url_id: Id da url encurtada que foi cadastrada no banco de dados
 		 *
 		 */
-		private function urls($url_id){
+		private function urls(){
+			// Validação do tipo de request
+			if($this->get_request_method() != "GET"){
+				$this->response('',404);
+			}
 
-			$this->response('',200);
+			// Tratamento dos dados passados pela url
+			$param = explode("/",$this->_request['method']);
+			$qtd = count($param);
+
+			// Se só houver um parametro na url retorna 404
+			if($qtd == 1){
+				$this->response('',404);
+			}
+
+			$this->response('',301);
 		}
 
         /*
