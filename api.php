@@ -76,16 +76,19 @@
 		private function users(){
 			// Validação do tipo de request
 			$request_method = trim($this->get_request_method());
+			/*
 			if($request_method != "POST" && $request_method != "GET"){
 				$this->response('',404);
 			}
+			*/
 
 			// Tratamento dos dados passados pela url
 			$id = array_key_exists("id",$this->_request) ? $this->_request['id'] : "";
 			$url = array_key_exists("url",$this->_request) ? $this->_request['url'] : "";
 			$method = array_key_exists("method",$this->_request) ? explode("/",$this->_request['method']) : "";
 
-			if(empty($url) && empty($method)){
+			// Cadastro do usuário
+			if($request_method == "POST" && empty($url) && empty($method)){
 
 				$sql = mysql_query("SELECT u.id FROM tb_users u WHERE u.id='{$id}'");
 				if(mysql_num_rows($sql) > 0){
@@ -97,35 +100,45 @@
 					$this->response($this->json($dados),201);
 				}
 
-			} elseif(!empty($method) && $method[2] == "stats"){
+			// Status por usuário
+			} elseif($request_method == "GET" && !empty($method) && $method[2] == "stats"){
 
 				$query = "SELECT SUM(u.hits) hits, COUNT(u.id) urlCount FROM tb_urls u WHERE u.user_id = '{$method[1]}';";
 				$sql = mysql_query($query);
 				if(mysql_num_rows($sql) > 0){
 					$result = mysql_fetch_array($sql, MYSQL_ASSOC);
-					$dados['hits'] = $result['hits'];
-					$dados['urlCount'] = $result['urlCount'];
-					$sql2 = mysql_query("SELECT u.id, u.hits, u.url, u.hash FROM tb_urls u WHERE u.user_id = '{$method[1]}' LIMIT 10");
-					while($result2 = mysql_fetch_array($sql2, MYSQL_ASSOC)){
+					// Validação de urls cadastradas
+					if($result['urlCount'] > 0){
+						$dados['hits'] = $result['hits'];
+						$dados['urlCount'] = $result['urlCount'];
+						$sql2 = mysql_query("SELECT u.id, u.hits, u.url, u.hash FROM tb_urls u WHERE u.user_id = '{$method[1]}' LIMIT 10");
+						while($result2 = mysql_fetch_array($sql2, MYSQL_ASSOC)){
 
-						if($this->port = "80"){
-							$url = "http://".$this->server."/".$result2['hash'];
-						} else {
-							$url = "http://".$this->server.":".$this->port."/".$result2['hash'];
+							if($this->port = "80"){
+								$url = "http://".$this->server."/".$result2['hash'];
+							} else {
+								$url = "http://".$this->server.":".$this->port."/".$result2['hash'];
+							}
+
+							$dados['topUrls'][] = array(
+								'id' => $result2['id'],
+								'hits' => $result2['hits'],
+								'url' => $result2['url'],
+								'shortUrl' => $url
+							);
 						}
-
-						$dados['topUrls'][] = array(
-							'id' => $result2['id'],
-							'hits' => $result2['hits'],
-							'url' => $result2['url'],
-							'shortUrl' => $url
-						);
+						$this->response($this->json($dados),200);
+					} else { // caso não tenha url cadastrada retorna erro 404
+						$this->response('',404);
 					}
+				} else {
+					$this->response('',404);
 				}
 
-				$this->response($this->json($dados),200);
 
-			} else {
+
+			// Cadastro de URL
+			} elseif($request_method == "POST") {
 
 				$sql = mysql_query("SELECT u.id FROM tb_users u WHERE u.id='{$id}'");
 				if(mysql_num_rows($sql) == 0){
@@ -191,33 +204,67 @@
 
 				$this->response($this->json($dados),201);
 
+			} else if($request_method == "DELETE"){
+
+				$user_id = $method[2];
+
+				mysql_query("DELETE FROM tb_users u WHERE u.id = '{$user_id}'");
+				$this->response('',200);
+
 			}
 
 		}
 
 		private function stats(){
 
-			$sql = mysql_query("SELECT SUM(u.hits) hits, COUNT(u.id) urlCount FROM tb_urls u");
-			if(mysql_num_rows($sql) > 0){
-				$result = mysql_fetch_array($sql, MYSQL_ASSOC);
-				$dados['hits'] = $result['hits'];
-				$dados['urlCount'] = $result['urlCount'];
-				$sql2 = mysql_query("SELECT u.id, u.hits, u.url, u.hash FROM tb_urls u LIMIT 10");
-				while($result2 = mysql_fetch_array($sql2, MYSQL_ASSOC)){
+			$method = array_key_exists("method", $this->_request) ? explode("/",$this->_request['method']) : "";
+
+			$tam = count($method);
+
+			if($tam > 1 && (int)$method[1]){
+
+				$sql = mysql_query("SELECT u.id, u.hits, u.url, u.hash FROM tb_urls u WHERE u.id = {$method[1]}");
+				while($result = mysql_fetch_array($sql, MYSQL_ASSOC)){
 
 					if($this->port = "80"){
-						$url = "http://".$this->server."/".$result2['hash'];
+						$url = "http://".$this->server."/".$result['hash'];
 					} else {
-						$url = "http://".$this->server.":".$this->port."/".$result2['hash'];
+						$url = "http://".$this->server.":".$this->port."/".$result['hash'];
 					}
 
 					$dados['topUrls'][] = array(
-						'id' => $result2['id'],
-						'hits' => $result2['hits'],
-						'url' => $result2['url'],
+						'id' => $result['id'],
+						'hits' => $result['hits'],
+						'url' => $result['url'],
 						'shortUrl' => $url
 					);
 				}
+
+			} else {
+
+				$sql = mysql_query("SELECT SUM(u.hits) hits, COUNT(u.id) urlCount FROM tb_urls u");
+				if(mysql_num_rows($sql) > 0){
+					$result = mysql_fetch_array($sql, MYSQL_ASSOC);
+					$dados['hits'] = $result['hits'];
+					$dados['urlCount'] = $result['urlCount'];
+					$sql2 = mysql_query("SELECT u.id, u.hits, u.url, u.hash FROM tb_urls u LIMIT 10");
+					while($result2 = mysql_fetch_array($sql2, MYSQL_ASSOC)){
+
+						if($this->port = "80"){
+							$url = "http://".$this->server."/".$result2['hash'];
+						} else {
+							$url = "http://".$this->server.":".$this->port."/".$result2['hash'];
+						}
+
+						$dados['topUrls'][] = array(
+							'id' => $result2['id'],
+							'hits' => $result2['hits'],
+							'url' => $result2['url'],
+							'shortUrl' => $url
+						);
+					}
+				}
+
 			}
 
 			$this->response($this->json($dados),200);
