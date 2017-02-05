@@ -66,7 +66,8 @@
 			$sql = mysql_query("SELECT u.url FROM tb_urls u WHERE u.id = {$param[1]}");
 			if(mysql_num_rows($sql)>0){
 				$result = mysql_fetch_array($sql, MYSQL_ASSOC);
-				$this->response($this->json($response),301);
+				mysql_query("UPDATE tb_urls u SET u.hits = (u.hits+1) WHERE u.id = {$param[1]}");
+				$this->response($this->json($result),301);
 			} else {
 				$this->response('',404);
 			}
@@ -80,9 +81,9 @@
 
 			// Tratamento dos dados passados pela url
 			$id = $this->_request['id'];
-			$urls = $this->_request['urls'];
+			$url = $this->_request['url'];
 
-			if(empty($urls)){
+			if(empty($url)){
 
 				$sql = mysql_query("SELECT u.id FROM tb_users u WHERE u.id='{$id}'");
 				if(mysql_num_rows($sql) > 0){
@@ -101,11 +102,64 @@
 					$this->response('', 404);
 				}
 
-				// Gerador de string encurtada
-				$rand = substr(md5(microtime()),rand(0,26),9);
+				// Utilizando a variavel i para forçar um timeout
+				$i = 0;
+				$validacao = false;
+				while($validacao == false && $i <= 20){
+					// Gerador de string encurtada
+					$hash = $this->gerador();
+					// Validação do Hash gerado para a URL encurtada
+					$sql = mysql_query("SELECT u.id FROM tb_urls u WHERE u.hash = '{$hash}'");
+					if(mysql_num_rows($sql) > 0){
+						$validacao = false;
+					} else {
+						$validacao = true;
+					}
+					$i++;
+				}
 
+				if($i > 20){
+					$this->response('',504);
+				}
 
-				//$this->respose($this->json($dados),201);
+				$sql = mysql_query("SELECT u.id, u.url, u.hash, u.hits FROM tb_urls u WHERE u.url = '{$url}' AND u.user_id = '{$id}'");
+				if(mysql_num_rows($sql) > 0){
+					$result = mysql_fetch_array($sql, MYSQL_ASSOC);
+					$dados['id'] = $result['id'];
+					$dados['hits'] = $result['hits'];
+					$dados['url'] = $result['url'];
+
+					if($this->port = "80"){
+						$url = "http://".$this->server."/".$result['hash'];
+					} else {
+						$url = "http://".$this->server.":".$this->port."/".$result['hash'];
+					}
+
+					$dados['shortUrl'] = $url;
+
+					$this->response($this->json($dados),201);
+
+				}
+
+				$sql = mysql_query("SELECT u.id FROM tb_urls u WHERE u.url = '{$url}'");
+				if(mysql_num_rows($sql) > 0){
+					$this->response('',403);
+				}
+
+				$sql = "INSERT INTO tb_urls (url, hash, user_id) VALUES ('{$url}','{$hash}','{$id}');";
+				mysql_query($sql);
+				$dados['id'] = mysql_insert_id();
+				$dados['hits'] = 0;
+				$dados['url'] = $url;
+				if($this->port = "80"){
+					$url = "http://".$this->server."/".$hash;
+				} else {
+					$url = "http://".$this->server.":".$this->port."/".$hash;
+				}
+
+				$dados['shortUrl'] = $url;
+
+				$this->response($this->json($dados),201);
 
 			}
 
@@ -119,6 +173,13 @@
                 return json_encode($data);
             }
         }
+
+		// Gerador de string encurtada
+		private function gerador(){
+
+			return substr(md5(microtime()),rand(0,26),8);
+
+		}
 
 	}
 
