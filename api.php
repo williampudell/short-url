@@ -63,7 +63,34 @@
 				$this->response('',404);
 			}
 
-			$this->response('',301);
+			$sql = mysql_query("SELECT u.url FROM tb_urls u WHERE u.id = {$param[1]}");
+			if(mysql_num_rows($sql)>0){
+				$result = mysql_fetch_array($sql, MYSQL_ASSOC);
+				$this->response($this->json($response),301);
+			} else {
+				$this->response('',404);
+			}
+		}
+
+		private function users(){
+			// Validação do tipo de request
+			if($this->get_request_method() != "POST"){
+				$this->response('',404);
+			}
+
+			// Tratamento dos dados passados pela url
+			$id = $this->_request['id'];
+
+			$sql = mysql_query("SELECT u.id FROM tb_users u WHERE u.id='{$id}'");
+			if(mysql_num_rows($sql) > 0){
+				$this->response('',409);
+			} else {
+				$sql = "INSERT INTO tb_users (id, dt_insert, ip_insert, st_record) VALUES ('{$id}',NOW(), '{$_SERVER['REMOTE_ADDR']}',1);";
+				mysql_query($sql);
+				$dados['id'] = $id;
+				$this->response($this->json($dados),201);
+			}
+
 		}
 
         /*
