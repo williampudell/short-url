@@ -5,6 +5,8 @@
 		public $_allow = array();
 		public $_content_type = "application/json";
 		public $_request = array();
+		public $server = "";
+		public $port = "";
 
 		private $_method = "";
 		private $_code = 200;
@@ -75,6 +77,8 @@
 		}
 
 		private function inputs(){
+			$this->server = $_SERVER['HTTP_HOST'];
+			$this->port = $_SERVER['SERVER_PORT'];
 			switch($this->get_request_method()){
 				case "POST":
 					$this->_request = $this->cleanInputs($_POST);
