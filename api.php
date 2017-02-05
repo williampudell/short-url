@@ -80,15 +80,33 @@
 
 			// Tratamento dos dados passados pela url
 			$id = $this->_request['id'];
+			$urls = $this->_request['urls'];
 
-			$sql = mysql_query("SELECT u.id FROM tb_users u WHERE u.id='{$id}'");
-			if(mysql_num_rows($sql) > 0){
-				$this->response('',409);
+			if(empty($urls)){
+
+				$sql = mysql_query("SELECT u.id FROM tb_users u WHERE u.id='{$id}'");
+				if(mysql_num_rows($sql) > 0){
+					$this->response('',409);
+				} else {
+					$sql = "INSERT INTO tb_users (id, dt_insert, ip_insert, st_record) VALUES ('{$id}',NOW(), '{$_SERVER['REMOTE_ADDR']}',1);";
+					mysql_query($sql);
+					$dados['id'] = $id;
+					$this->response($this->json($dados),201);
+				}
+
 			} else {
-				$sql = "INSERT INTO tb_users (id, dt_insert, ip_insert, st_record) VALUES ('{$id}',NOW(), '{$_SERVER['REMOTE_ADDR']}',1);";
-				mysql_query($sql);
-				$dados['id'] = $id;
-				$this->response($this->json($dados),201);
+
+				$sql = mysql_query("SELECT u.id FROM tb_users u WHERE u.id='{$id}'");
+				if(mysql_num_rows($sql) == 0){
+					$this->response('', 404);
+				}
+
+				// Gerador de string encurtada
+				$rand = substr(md5(microtime()),rand(0,26),9);
+
+
+				//$this->respose($this->json($dados),201);
+
 			}
 
 		}
