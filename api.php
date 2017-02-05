@@ -7,20 +7,28 @@
 		public $data = "";
 
 		const DB_SERVER = "localhost";
-		const DB_USER = "root";
-		const DB_PASSWORD = "arun";
-		const DB = "users";
+		const DB_USER = "short-url";
+		const DB_PASSWORD = "short-url";
+		const DB = "short-url";
 
 		private $db = NULL;
 
 		public function __construct(){
-			parent::__construct();				// Init parent contructor
-			$this->dbConnect();					// Initiate Database connection
+			parent::__construct();
+			$this->dbConnect();
+		}
+
+		//Database connection
+		private function dbConnect()
+		{
+			$this->db = mysql_connect(self::DB_SERVER,self::DB_USER,self::DB_PASSWORD);
+			if($this->db)
+				mysql_select_db(self::DB,$this->db);
 		}
 
         /*
-         * Public method for access api.
-         * This method dynmically call the method based on the query string
+         * Método público de acesso a api.
+         * Este método chama a função desejada com base na query string
          *
          */
         public function processApi(){
@@ -28,7 +36,16 @@
             if((int)method_exists($this,$func) > 0)
                 $this->$func();
             else
-                $this->response('',404);				// If the method not exist with in this class, response would be "Page not found".
+                $this->response('',404);				// Se o método não existe ele retorna o erro 404
+        }
+
+        /*
+         *	Função utilizada para retornar um aray no formato JSON
+         */
+        private function json($data){
+            if(is_array($data)){
+                return json_encode($data);
+            }
         }
 
 	}
