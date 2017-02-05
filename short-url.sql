@@ -36,10 +36,11 @@ CREATE TABLE IF NOT EXISTS `tb_urls` (
   `url` varchar(255) NOT NULL,
   `surl` varchar(100) NOT NULL,
   `hits` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
   `dt_insert` datetime NOT NULL,
   `ip_insert` varchar(30) NOT NULL,
-  `dt_update` datetime NOT NULL,
-  `ip_update` varchar(30) NOT NULL,
+  `dt_update` datetime DEFAULT NULL,
+  `ip_update` varchar(30) DEFAULT NULL,
   `st_record` tinyint(1) NOT NULL DEFAULT '1' COMMENT '1: Active | 2: Inactive'
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
@@ -54,8 +55,8 @@ CREATE TABLE IF NOT EXISTS `tb_users` (
   `id` varchar(50) NOT NULL,
   `dt_insert` datetime NOT NULL,
   `ip_insert` varchar(30) NOT NULL,
-  `dt_update` datetime NOT NULL,
-  `ip_update` varchar(30) NOT NULL,
+  `dt_update` datetime DEFAULT NULL,
+  `ip_update` varchar(30) DEFAULT NULL,
   `st_record` tinyint(1) NOT NULL DEFAULT '1' COMMENT '1: Active | 2: Inactive'
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
@@ -86,8 +87,10 @@ ALTER TABLE `tb_urls`
 MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 GRANT USAGE ON *.* TO 'short-url'@'%' IDENTIFIED BY PASSWORD '*207D9198511C55CE4D8C7D2D6ED9F0A337519CE4';
+GRANT USAGE ON *.* TO 'short-url'@'localhost' IDENTIFIED BY PASSWORD '*207D9198511C55CE4D8C7D2D6ED9F0A337519CE4';
 
 GRANT ALL PRIVILEGES ON `short-url`.* TO 'short-url'@'%';
+GRANT ALL PRIVILEGES ON `short-url`.* TO 'short-url'@'localhost';
 
 COMMIT;
 
