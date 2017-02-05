@@ -36,7 +36,7 @@
 						205 => 'Reset Content',
 						206 => 'Partial Content',
 						300 => 'Multiple Choices',
-						301 => 'Moved Permanently',
+						301 => 'Redirect',
 						302 => 'Found',
 						303 => 'See Other',
 						304 => 'Not Modified',
