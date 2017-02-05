@@ -75,15 +75,17 @@
 
 		private function users(){
 			// Validação do tipo de request
-			if($this->get_request_method() != "POST"){
+			$request_method = trim($this->get_request_method());
+			if($request_method != "POST" && $request_method != "GET"){
 				$this->response('',404);
 			}
 
 			// Tratamento dos dados passados pela url
-			$id = $this->_request['id'];
-			$url = $this->_request['url'];
+			$id = array_key_exists("id",$this->_request) ? $this->_request['id'] : "";
+			$url = array_key_exists("url",$this->_request) ? $this->_request['url'] : "";
+			$method = array_key_exists("method",$this->_request) ? explode("/",$this->_request['method']) : "";
 
-			if(empty($url)){
+			if(empty($url) && empty($method)){
 
 				$sql = mysql_query("SELECT u.id FROM tb_users u WHERE u.id='{$id}'");
 				if(mysql_num_rows($sql) > 0){
@@ -94,6 +96,34 @@
 					$dados['id'] = $id;
 					$this->response($this->json($dados),201);
 				}
+
+			} elseif(!empty($method) && $method[2] == "stats"){
+
+				$query = "SELECT SUM(u.hits) hits, COUNT(u.id) urlCount FROM tb_urls u WHERE u.user_id = '{$method[1]}';";
+				$sql = mysql_query($query);
+				if(mysql_num_rows($sql) > 0){
+					$result = mysql_fetch_array($sql, MYSQL_ASSOC);
+					$dados['hits'] = $result['hits'];
+					$dados['urlCount'] = $result['urlCount'];
+					$sql2 = mysql_query("SELECT u.id, u.hits, u.url, u.hash FROM tb_urls u WHERE u.user_id = '{$method[1]}' LIMIT 10");
+					while($result2 = mysql_fetch_array($sql2, MYSQL_ASSOC)){
+
+						if($this->port = "80"){
+							$url = "http://".$this->server."/".$result2['hash'];
+						} else {
+							$url = "http://".$this->server.":".$this->port."/".$result2['hash'];
+						}
+
+						$dados['topUrls'][] = array(
+							'id' => $result2['id'],
+							'hits' => $result2['hits'],
+							'url' => $result2['url'],
+							'shortUrl' => $url
+						);
+					}
+				}
+
+				$this->response($this->json($dados),200);
 
 			} else {
 
@@ -163,6 +193,34 @@
 
 			}
 
+		}
+
+		private function stats(){
+
+			$sql = mysql_query("SELECT SUM(u.hits) hits, COUNT(u.id) urlCount FROM tb_urls u");
+			if(mysql_num_rows($sql) > 0){
+				$result = mysql_fetch_array($sql, MYSQL_ASSOC);
+				$dados['hits'] = $result['hits'];
+				$dados['urlCount'] = $result['urlCount'];
+				$sql2 = mysql_query("SELECT u.id, u.hits, u.url, u.hash FROM tb_urls u LIMIT 10");
+				while($result2 = mysql_fetch_array($sql2, MYSQL_ASSOC)){
+
+					if($this->port = "80"){
+						$url = "http://".$this->server."/".$result2['hash'];
+					} else {
+						$url = "http://".$this->server.":".$this->port."/".$result2['hash'];
+					}
+
+					$dados['topUrls'][] = array(
+						'id' => $result2['id'],
+						'hits' => $result2['hits'],
+						'url' => $result2['url'],
+						'shortUrl' => $url
+					);
+				}
+			}
+
+			$this->response($this->json($dados),200);
 		}
 
         /*
