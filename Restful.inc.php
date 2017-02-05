@@ -7,11 +7,13 @@
 		public $_request = array();
 		public $server = "";
 		public $port = "";
+		public $folder = "";
 
 		private $_method = "";
 		private $_code = 200;
 
 		public function __construct(){
+			$this->url();
 			$this->inputs();
 		}
 
@@ -76,9 +78,24 @@
 			return $_SERVER['REQUEST_METHOD'];
 		}
 
-		private function inputs(){
+		private function url(){
+
+			$self = explode("/",$_SERVER['PHP_SELF']);
+			$tam = count($self);
+
 			$this->server = $_SERVER['HTTP_HOST'];
+			for($i = 0; $i < $tam; $i++){
+				if(!empty($self[$i])){
+					if(substr($self[$i], -4, 1) != "."){
+						$this->server .= "/".$self[$i];
+					}
+				}
+			}
 			$this->port = $_SERVER['SERVER_PORT'];
+
+		}
+
+		private function inputs(){
 			switch($this->get_request_method()){
 				case "POST":
 					$this->_request = $this->cleanInputs($_POST);
