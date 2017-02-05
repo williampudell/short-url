@@ -33,16 +33,16 @@ USE `short-url`;
 DROP TABLE IF EXISTS `tb_urls`;
 CREATE TABLE IF NOT EXISTS `tb_urls` (
 `id` int(11) NOT NULL,
-  `url` varchar(255) NOT NULL,
-  `surl` varchar(100) NOT NULL,
-  `hits` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `dt_insert` datetime NOT NULL,
-  `ip_insert` varchar(30) NOT NULL,
-  `dt_update` datetime DEFAULT NULL,
-  `ip_update` varchar(30) DEFAULT NULL,
+  `url` varchar(255) NOT NULL COMMENT 'Url original',
+  `hash` varchar(10) NOT NULL COMMENT 'Hash da url encurtada',
+  `hits` int(11) NOT NULL DEFAULT '0' COMMENT 'Contator de hits da url',
+  `user_id` varchar(50) NOT NULL COMMENT 'User id',
+  `dt_insert` datetime NOT NULL COMMENT 'Data de inserção do registro',
+  `ip_insert` varchar(30) NOT NULL COMMENT 'IP de origem do registro',
+  `dt_update` datetime DEFAULT NULL COMMENT 'Data de atualização do registro',
+  `ip_update` varchar(30) DEFAULT NULL COMMENT 'IP de origem da atualização',
   `st_record` tinyint(1) NOT NULL DEFAULT '1' COMMENT '1: Active | 2: Inactive'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -53,10 +53,10 @@ CREATE TABLE IF NOT EXISTS `tb_urls` (
 DROP TABLE IF EXISTS `tb_users`;
 CREATE TABLE IF NOT EXISTS `tb_users` (
   `id` varchar(50) NOT NULL,
-  `dt_insert` datetime NOT NULL,
-  `ip_insert` varchar(30) NOT NULL,
-  `dt_update` datetime DEFAULT NULL,
-  `ip_update` varchar(30) DEFAULT NULL,
+  `dt_insert` datetime NOT NULL COMMENT 'Data de inserção do registro',
+  `ip_insert` varchar(30) NOT NULL COMMENT 'IP de origem do registro',
+  `dt_update` datetime DEFAULT NULL COMMENT 'Data de atualização do registro',
+  `ip_update` varchar(30) DEFAULT NULL COMMENT 'IP de origem da atualização',
   `st_record` tinyint(1) NOT NULL DEFAULT '1' COMMENT '1: Active | 2: Inactive'
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
