@@ -32,12 +32,37 @@
          *
          */
         public function processApi(){
-            $func = strtolower(trim(str_replace("/","",$_REQUEST['method'])));
-            if((int)method_exists($this,$func) > 0)
-                $this->$func();
-            else
-                $this->response('',404);				// Se o método não existe ele retorna o erro 404
+			if(array_key_exists("method",$_REQUEST)){
+				// removo os espaços, transformo em minusculo e explodo a chamada para execução da API
+	            $func = explode("/",strtolower(trim($_REQUEST['method'])));
+				// Conto quantos parametros existem na chamada
+				$param = count($func);
+				// Verifico se existe a função desejada
+	            if((int)method_exists($this,$func[0]) > 0){
+					// Se houver mais de um parametro na chamada eu passo para a função
+					if($param > 1){
+						$this->$func[0]($func[1]);
+					} else { // Se não houver, apenas chamo a função
+						$this->$func[0]();
+					}
+	            } else { // Se a função não existe ele retorna o erro 404
+					$this->response('',404);
+				}
+			} else {
+				// Se não for passado nenhum parametro retorna o erro 404
+				$this->response('',404);
+			}
         }
+
+		/*
+		 *	Função que retorna a URL completa baseando-se no ID passado
+		 *	@param url_id: Id da url encurtada que foi cadastrada no banco de dados
+		 *
+		 */
+		private function urls($url_id){
+
+			$this->response('',200);
+		}
 
         /*
          *	Função utilizada para retornar um aray no formato JSON
