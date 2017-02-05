@@ -49,38 +49,45 @@
 		 *
 		 */
 		private function urls(){
-			// Validação do tipo de request
-			if($this->get_request_method() != "GET"){
-				$this->response('',404);
+
+			$request_method = trim($this->get_request_method());
+
+			if($request_method == "GET"){
+
+				// Tratamento dos dados passados pela url
+				$param = explode("/",$this->_request['method']);
+				$qtd = count($param);
+
+				// Se só houver um parametro na url retorna 404
+				if($qtd == 1){
+					$this->response('',404);
+				}
+
+				$sql = mysql_query("SELECT u.url FROM tb_urls u WHERE u.id = {$param[1]}");
+				if(mysql_num_rows($sql)>0){
+					$result = mysql_fetch_array($sql, MYSQL_ASSOC);
+					mysql_query("UPDATE tb_urls u SET u.hits = (u.hits+1) WHERE u.id = {$param[1]}");
+					$this->response($this->json($result),301);
+				} else {
+					$this->response('',404);
+				}
+
+			} elseif($request_method == "DELETE") {
+
+				$method = explode("/",$this->_request['method']);
+				$url_id = (int)$method[1];
+
+				$query = "DELETE FROM tb_urls WHERE id = '{$url_id}';";
+				mysql_query($query);
+				$this->response('',200);
+
 			}
 
-			// Tratamento dos dados passados pela url
-			$param = explode("/",$this->_request['method']);
-			$qtd = count($param);
-
-			// Se só houver um parametro na url retorna 404
-			if($qtd == 1){
-				$this->response('',404);
-			}
-
-			$sql = mysql_query("SELECT u.url FROM tb_urls u WHERE u.id = {$param[1]}");
-			if(mysql_num_rows($sql)>0){
-				$result = mysql_fetch_array($sql, MYSQL_ASSOC);
-				mysql_query("UPDATE tb_urls u SET u.hits = (u.hits+1) WHERE u.id = {$param[1]}");
-				$this->response($this->json($result),301);
-			} else {
-				$this->response('',404);
-			}
 		}
 
 		private function users(){
-			// Validação do tipo de request
+
 			$request_method = trim($this->get_request_method());
-			/*
-			if($request_method != "POST" && $request_method != "GET"){
-				$this->response('',404);
-			}
-			*/
 
 			// Tratamento dos dados passados pela url
 			$id = array_key_exists("id",$this->_request) ? $this->_request['id'] : "";
@@ -134,8 +141,6 @@
 				} else {
 					$this->response('',404);
 				}
-
-
 
 			// Cadastro de URL
 			} elseif($request_method == "POST") {
@@ -206,9 +211,10 @@
 
 			} else if($request_method == "DELETE"){
 
-				$user_id = $method[2];
+				$user_id = $method[1];
 
-				mysql_query("DELETE FROM tb_users u WHERE u.id = '{$user_id}'");
+				$query = "DELETE FROM tb_users WHERE id = '{$user_id}';";
+				mysql_query($query);
 				$this->response('',200);
 
 			}
